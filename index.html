@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wappalyzer Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+
+            text-align: center;
+            padding: 20px;
+            margin: 300px;
+            background-color: #1188b4;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+
+
+        label {
+            font-size: 1.2rem;
+            margin-right: 10px;
+            color: #fff;
+            height: 50px;
+            background-color: #1188b4;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            width: 50%;
+
+
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 30%;
+
+            margin-top: 28px;
+            text-align: center;
+        }
+
+
+        .submit-button {
+            padding: 10px;
+            width: 200px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #2980b9;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            vertical-align: middle;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .submit-button:hover {
+            background-color: hsla(223, 66%, 23%, 0.937);
+            transform: translateY(-2px); /* Add a slight upward shift on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 90%;
+            border-collapse: collapse;
+            margin: 50px auto;
+            background-color: #fff;
+
+
+        }
+
+        caption.center {
+            text-align: center;
+        }
+
+        td {
+            border: 1px solid hsla(0, 82%, 7%, 0.168);
+            padding: 10px;
+            text-align: left;
+        }
+
+
+
+        th {
+            border: 1px solid hsla(0, 82%, 7%, 0.168);
+            padding: 10px;
+            text-align: center;
+            background-color: hwb(224 6% 31%);
+            color: #fff;
+            height: 50px;
+            font-size: 1.2rem;
+
+        }
+
+
+        tr:nth-child(odd) {
+            background-color: hsla(275, 79%, 8%, 0);
+        }
+
+        tr:nth-child(even) {
+            background-color: #e6e6e6;
+        }
+
+        .export-button {
+            position: fixed;
+            height: 50px;
+            top: 20px; 
+
+            right: 20px;
+            background-color: #3498db;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+    transition: background-color 0.3s ease, transform 0.2s ease; 
+           
+        }
+
+        .export-button:hover {
+            background-color: #110a8ddb;
+            transform: translateY(-2px); 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        #loadingContainer {
+
+            justify-content: center;
+            align-items: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin-left: 700px;
+            margin-top: 200px;
+            background-color: rgba(255, 255, 255, 0.5);
+
+        }
+
+        #loadingImage {
+            width: 100px;
+
+            height: 100px;
+            margin-left: 700px;
+            margin-top: 200px;
+
+        }
+    </style>
+    <script>
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const submitButton = document.querySelector('.submit-button');
+    const urlInput = document.getElementById('urlInput');
+
+    submitButton.addEventListener('click', handleSubmit);
+    urlInput.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleSubmit();
+        }
+    });
+
+    function handleSubmit() {
+        // const url = urlInput.value.trim();
+        let inputUrl = urlInput.value.trim();
+
+        if (!/^https?:\/\//i.test(inputUrl)) {
+        inputUrl = 'http://' + inputUrl;
+    }
+
+    if (!isValidUrl(inputUrl)) {
+        console.error('Invalid URL');
+        return;
+    }
+
+        
+
+        clearPreviousData();
+        showLoadingImage();
+        fetchData(inputUrl);
+    }
+
+    function isValidUrl(url) {
+        const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+([a-zA-Z]{2,})(\/\S*)?$/;
+        return urlPattern.test(url);
+    }
+
+    function clearPreviousData() {
+        const tableBody = document.getElementById('output');
+        tableBody.innerHTML = "";
+    }
+
+    function showLoadingImage() {
+        document.getElementById('loadingImage').style.display = 'block';
+    }
+
+    function hideLoadingImage() {
+        document.getElementById('loadingImage').style.display = 'none';
+    }
+
+    function fetchData(url) {
+        fetch('/getdetails', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Data:", data);
+            hideLoadingImage();
+            displayTechnologies(data.technologies);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            hideLoadingImage();
+        });
+    }
+
+    function displayTechnologies(technologiesInfo) {
+        const tableBody = document.getElementById('output');
+
+        if (technologiesInfo.length === 0) {
+            tableBody.innerHTML = "<tr><td colspan='6'>No data is available. Please try a different URL.</td></tr>";
+            return;
+        }
+
+        const tableHeader = `
+<thead>
+  <tr>
+      <th>Slug</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Confidence</th>
+      <th>Website</th>
+      <th>Categories</th>
+  </tr>
+</thead>
+`;
+        tableBody.innerHTML += tableHeader;
+
+        technologiesInfo.forEach(tech => {
+            const categories = tech.categories.map(category => category.name).join(', ');
+            const row = `
+            <tr>
+                <td>${tech.slug}</td>
+                <td>${tech.name}</td>
+                <td>${tech.description || '-'}</td>
+                <td>${tech.confidence}</td>
+                <td><a href="${tech.website}" target="_blank">${tech.website}</a></td>
+                <td>${categories}</td>
+            </tr>
+        `;
+            tableBody.innerHTML += row;
+        });
+    }
+});
+
+
+
+        function exportData() {
+            const table = document.getElementById('techTable');
+            const tableHTML = table.outerHTML.replace(/ /g, '%20');
+
+            const filename = 'technology_details.xls';
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+
+    </script>
+
+
+
+</head>
+
+<body>
+
+    <Span class="container">
+        <label for="urlInput">Enter URL:</label>
+        <input type="text" id="urlInput" placeholder="Enter the URL here">
+        <!-- <input type="text" id="urlInput" placeholder="https://www.example.com"> -->
+        <button class="submit-button"><B>SUBMIT</B></button>
+    </Span>
+    <Span>
+        <img id="loadingImage" src="https://media.tenor.com/wpSo-8CrXqUAAAAj/loading-loading-forever.gif"
+            style="display: none;" alt="Loading..." />
+
+        <table id="techTable">
+
+            <tbody id="output"></tbody>
+        </table>
+        <button class="export-button" onclick="exportData()">Export Data</button>
+    </Span>
+
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+<!-- document.addEventListener('DOMContentLoaded', function () {
+
+    const submitButton = document.querySelector('.submit-button');
+    const urlInput = document.getElementById('urlInput');
+
+    submitButton.addEventListener('click', handleSubmit);
+    urlInput.addEventListener('keypress', function (event) {
+        console.log("Keypress event:", event);
+
+        if (event.key === 'Enter') {
+
+            event.preventDefault();
+            handleSubmit();
+        }
+    });
+
+    function handleSubmit() {
+       
+        console.log("Submit action triggered");
+
+
+        let urlInput = document.getElementById('urlInput');
+        let url = urlInput.value.trim();
+
+        if (!url.startsWith('https://www.')) {
+            url = 'https://www.' + url;
+        }
+        if (!url.endsWith('.com')) {
+            url += '.com';
+        }
+        console.log("Processed URL:", url);
+        clearPreviousData();
+        showLoadingImage();
+        fetchData(url);
+    }
+})
+
+function clearPreviousData() {
+    const tableBody = document.getElementById('output');
+    tableBody.innerHTML = "";
+}
+
+
+function showLoadingImage() {
+    document.getElementById('loadingImage').style.display = 'block';
+}
+
+function hideLoadingImage() {
+    document.getElementById('loadingImage').style.display = 'none';
+}
+ const urlInput = document.getElementById('urlInput');
+const myHeaders = new Headers();
+myHeaders.append("Content-Type", "application/json");
+
+const raw = JSON.stringify({
+"url": url
+});
+const requestOptions = {
+method: "POST",
+headers: myHeaders,
+body: raw,
+redirect: "follow",
+timeout: 60000 
+};
+
+function fetchData(url) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ "url": url }),
+    };
+
+    fetch("/getdetails", requestOptions)
+        .then(response => response.json())
+        .then(data => {
+
+            console.log("data = ", data);
+            hideLoadingImage();
+            displayTechnologies(data.technologies);
+        })
+
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            hideLoadingImage();
+        }
+        );
+}
+
+
+function displayTechnologies(technologiesInfo) {
+    const tableBody = document.getElementById('output');
+    tableBody.innerHTML = "";
+
+    if (technologiesInfo.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='6'>No data is available. Please try a different URL.</td></tr>";
+        return;
+    }
+    const tableHeader = `
+<thead>
+<tr>
+<th>Slug</th>
+<th>Name</th>
+<th>Description</th>
+<th>Confidence</th>
+<th>Website</th>
+<th>Categories</th>
+</tr>
+</thead>
+`;
+    tableBody.innerHTML += tableHeader;
+
+    technologiesInfo.forEach(tech => {
+        const categories = tech.categories.map(category => category.name).join(', ');
+        const row = `
+    <tr>
+        <td>${tech.slug}</td>
+        <td>${tech.name}</td>
+        <td>${tech.description || '-'}</td>
+        <td>${tech.confidence}</td>
+        <td><a href="${tech.website}" target="_blank">${tech.website}</a></td>
+        <td>${categories}</td>
+    </tr>
+`;
+        tableBody.innerHTML += row;
+    });
+} -->
